@@ -1,64 +1,68 @@
-# 03_04_ci_cd_for_container_images
-This lesson demonstrates how to set up a CI/CD workflow for container images.
+# 04_03_ci_cd_for_github_pages
+> **Warning**: GitHub Pages sites are publicly available on the internet, even if the repository for the site is private.
+>
+> If you have sensitive data in your site's repository, you may want to remove the data before publishing a site using GitHub Pages.
+>
+> Specifically, do not publish repository secrets that may include passwords or credentials.
 
-Specifically, this demo implements a delivery workflow that:
-- Reuses a workflow to run integration tests
-- Collects metadata
-- Builds the image
-- Publishes the image to GitHub Packages
+[GitHub Pages](https://pages.github.com/) is a free service provided by GitHub that allows users to host static websites directly from their GitHub repositories.
+
+Static sites can be stored in a repo as HTML, JavaScript, and CSS.  Or they can be stored as Markdown.
+
+For Markdown sites, a static site generator is used to convert Markdown files into HTML.
+
+Popular static site generators include:
+- [Jekyll](https://jekyllrb.com/)
+- [Hugo](https://gohugo.io/)
+- [Gatsby](https://www.gatsbyjs.com/)
+
+Project sites are available at URLs similar to the following:
+- `http(s)://<username>.github.io/<repository>`
+- `http(s)://<organization>.github.io/<repository>`.
+
+GitHub Pages can also be configured to use a custom domain.
+
+## Jekyll Front Matter
+To help Jekyll with compiling and publishing Markdown files, files contain text near the top of the file called [front matter](https://jekyllrb.com/docs/front-matter/).
+
+> Any file that contains a YAML front matter block will be processed by Jekyll as a special file. The front matter must be the first thing in the file and must take the form of valid YAML set between triple-dashed lines. Here is a basic example:
+
+    ---
+    layout: page
+    title: Welcome to my site
+    permalink: /
+    ---
+
+## Recommended Reading
+- [GitHub Pages Documentation](https://docs.github.com/en/pages)
+
+- [GitHub Pages Usage limits](https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages#usage-limits)
 
 ## Using the Exercise Files
-1. Create a new repo and upload the files for this lesson.
-1. Rename the file [python-ci-workflow.yml](./python-ci-workflow.yml) so that its located in the `.github/workflows` directory.
+1. Create a new repo and add the exercise files for this lesson.
 
-        Completing this step is key to having the workflow run properly!
+    Make sure all `*.png` files are moved into the `images` directory.
 
-1. In the repo select the *Actions* tab.
-1. Select and configure the workflow *Publish Docker Container*.
-1. Under `jobs`, add an ID named “integration” and the keyword `uses` followed by the path to `python-ci-workflow.yml`.
+    _*Note that images will not display properly unless they are located in the `images` directory.*_
 
-    _NOTE that the path to the workflow starts with `./` and contains the full path the workflow file._
-
-    Add a permissions block followed by `contents: read` and `checks: write`.
-
-    The completed call to the reused workflow should be similar to the following:
-
-
-        jobs:
-            integration:
-                uses: ./.github/workflows/python-ci-workflow.yml
-                permissions:
-                contents: read
-                checks: write
-
-1. Under the job with the ID `build`, add `needs`, followed by the ID for the integration job.  This will cause the `build` job to wait for the `integration` job to complete.
-
-        build:
-            needs: [integration]
-
-1. Select *Start Commit* and then select *Commit New File*.
-1. Select the *Actions* tab.
-1. Select the running workflow.
-1. Observe the `integration/build` job followed by the `build` job.
-1. Observe the updates to the Actions UI as the `integration/build` job completes.
-1. Once the workflow completes, select the *Code* tab.
-1. Refresh the page as needed until the package is listed under *Packages*.
-1. Select the package and review the details on the package page.
-
-# Fixing Warnings in the Annotations Section
-At the time this course was published, the *Publish Docker Container* workflow contained actions based on `Node 12`.
-
-[Node 12 has been out of support since April 2022 and has been deprecated by Github Actions](https://github.blog/changelog/2022-09-22-github-actions-all-actions-will-begin-running-on-node16-instead-of-node12/).
-
-This causes warnings to be written to the Actions UI.
-
-To remove these warnings, the version for actions used in this workflow need to be updated.
-
-Update your workflow to use the following actions with the indicated versions.  Also, check the provided Marketplace page to see if newer versions are available.
-
-|Action Marketplace Page|Action Name and Version|
-|--|--|
-|[Docker Setup Buildx](https://github.com/marketplace/actions/docker-setup-buildx)|`docker/setup-buildx-action@v2.5.0`|
-|[Docker Login](https://github.com/marketplace/actions/docker-login)|`docker/login-action@v2.1.0`|
-|[Docker Metadata action](https://github.com/marketplace/actions/docker-metadata-action)|`docker/metadata-action@v4.4.0`|
-|[Build and push Docker images](https://github.com/marketplace/actions/build-and-push-docker-images)|`docker/build-push-action@v4.0.0`|
+1. From the repo homepage, select **Settings**.
+1. On the Settings page, under **Code and automation**, select **Pages**.
+1. On the *GitHub Pages* page, under **Build and Deployment**, select the drop-down under **Source**.
+1. Select **GitHub Actions**.
+1. Note that repos that only contain HTML, JavaScript, and CSS can be deployed using the *Static HTML* workflow.
+1. Under **GitHub Pages Jekyll**, select **Configure**.
+1. Review the starter workflow, *Deploy Jekyll with GitHub Pages dependencies preinstalled*. Things to note include:
+    - The workflow is triggered by pushes to the main branch or workflow dispatch
+    - Permissions are requested for reading the repo, writing to the github pages service, and writing to
+    the ID token.
+    - The workflow establishes concurrency at the workflow level for a group named "pages" and will wait for in builds that are in progress to complete.
+    - the **build** job checkouts out the repo and runs the `jekyll-build-pages` action to compile the site into a directory containing the HTML, JavaScript, and CSS.
+    - The `upload-pages-artifact` action is used to create an artifact for the deploy step.
+    - The **deploy** job waits for the build job to complete and then deploys the artifact using the `deploy-pages` action.
+    - Note that the build job also uses an environment named github-pages and sets a URL for display on in the Actions UI.
+1. Select **Commit changes...** and then **Commit changes**.
+1. Go to the **Actions** tab.
+1. Note the actively running workflow and select it.
+1. Wait for the workflow to complete.  Optionally, click into the build and deploy jobs to observe them while they are running.
+1. Note and select the URL displayed on the build job.
+1. View the deployed site.
